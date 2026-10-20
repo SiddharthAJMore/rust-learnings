@@ -150,11 +150,123 @@ fn main() {
                 num1 + num2
             }
             println!("addition of 1 and 2 gives: {}", add(10,11));
-    //      
+
             fn get_something(given: i32) -> (i32, char) {
                 (given+1, '+')
             }
             let (value, operator)= get_something(11);
             println!("we get: {value} after doing {operator} 1");
+    
+    println!("===================Control Flow===================");
+    // Control flow in Rust is done using, if...else, loop, while and for.
+    // 1. if...else
+            let num = 3;
+            if num==3 {
+                println!("Number is 3");
+            } else if num == 0 {
+                println!("Number is 0");
+            } else {
+                println!("Number is not 3");
+            }
+    //    if expressions are sometimes called as arms. (Like the arms in match expressions)
+    //    If code has too many else ifs we can use match expressions.
+             let a = if (9/3)==4 {3} else {2};
+             println!("value of a is: {a}");
+    //      - Since if are expressions i.e. that they can return value, we can use it to assign value
+    //      in let conditions.
+    //      - NOTE while using the if else conditionals with let, the return type of both if and
+    //      else condition should be same, else it would fail in compiling. For example in above var
+    //      'a' declaration both if and else condition return an integer. 
+    //       example:
+    //           let number = if condition { 5 } else { "six" };
+    //          this would throw and exception.
+    //      - This is because, compiler needs to know what type is `num` variable during compile
+    //      time, to check if the usages of var num thoughout the program are valid.
+    //
+    //  2. Loops
+            let mut counter = 0;
+            let y = loop {
+                counter += 1;
+                if counter==10 {
+                    break counter*10; // this is expression, but we still use the semicolon because
+                    // break, continue or return are the keywords that gives/assigns the values to
+                    // the loop or function, so they work.
+                }
+            };
 
+            println!("value for y returned by loop is: {y}");
+            
+    //     - Use break keyword to break out of loop
+    //     - Use continue keyword to continue to next iteration (skip further code execution in the
+    //     loop for current iteration)
+    //     - We can use loop to return a value.
+    //
+            let mut c = 3;
+            'continuing_up: loop {
+                 println!("current c value: {c}");
+                 let mut d = c;
+                 loop {
+                    println!("current d value: {d}");
+                    if c==2 && d==1 {
+                        break 'continuing_up;
+                    }
+                    if d==0 { break };
+                    d -= 1;
+                 }
+                 c -= 1;
+            }
+    //      Here continuing_up is a label for the outer loop. We can use this label concept when we
+    //      want to break out of loops in nested loops.
+    //
+    //  3. While Loop
+    //
+            let mut e = 3;
+
+            while e != 0 {
+                println!("{e}!");
+                e -= 1;
+            }
+            println!("LIFTOFF!!!");
+    //  
+    //  4. For loop
+            let f = [10, 20, 30, 40, 50];
+
+            for element in f {
+                println!("the value is: {element}");
+            }
+
+            for number in (1..4).rev() { // using range exclusive of 4, so 1,2,3
+                println!("{number}!");
+            }
+            println!("LIFTOFF!!!");
+    
+    println!("================Assignments=================");
+    // convert degF to degC
+    let deg_c_value = deg_f_to_def_c(64.0);
+    println!("64.0 deg Farhenheit to def Celcius is: {deg_c_value}");
+
+    fibonacci_series(8);
+}
+
+fn deg_f_to_def_c(deg_f : f64) -> f64 {
+    (deg_f - 32.0)* (5.0/9.0)
+}
+
+fn fibonacci_series(num: i32) {
+    println!("Fibonnaci series of {num} elements");
+    let mut a = 0;
+    let mut b = 1;
+
+    for i in 1..=num {
+        if i==1 {
+            println!("0") 
+        } else if i==2 {
+            println!("1")
+        } else {
+            let current = a+b;
+            println!("{current}");
+            a = b;
+            b = current;
+        }
+    }
 }
