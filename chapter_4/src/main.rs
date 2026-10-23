@@ -78,6 +78,7 @@ fn main() {
 
     // -------------------------------------------------------------------------------------- //
         let mut s = String::from("hello");
+        println!("{s}, world!");
         s = String::from("ahoy");
         println!("{s}, world!");
     // In above code as soon as we assign the existing variable new value, Rust calls drop and
@@ -123,13 +124,112 @@ fn main() {
     // Function return values also transfer Ownership.
     
     {
-        let s6 = gives_ownership();
+        let s6 = gives_ownership(); // s6 comes into scope. output of gives_ownership() is 
+        // stored in s6, its value is moved into s6
         println!("S6= {s6}");
 
-        let s7 = String::from("world!");
-        let s8 = take_and_give_ownership(s7);
-    }
+        let s7 = String::from("world!"); // s7 comes in scope. 
+        let s8 = take_and_give_ownership(s7); // Ownership of s7 is moved to method. Method
+        // return value of method is moved into s8.
+        println!("s8 = {s8}"); //
+    } // scope ends. S6 scope ends, s7 was already moved so nothing happens, s8 scope ends.
     
+
+    // Why is this a problem?
+    // Suppose you want a function that gives some info about input and then you use that info AND
+    // the input somewhere else. In that case your function should take your input (i.e. move the
+    // value to function) and then return BOTH input and output. Returning both, since you want to
+    // use the input again in the parent call.
+    // See below example:
+    
+    {
+        let s8 = String::from("hello");  // s8 comes into scope
+        let (str, length) = calculate_length(s8);  // s8 value moves to the function
+        println!("Length of string: {str} is {length}");
+    }   // s8 value was moved into function so nothing happens. str & length scope ends
+    
+
+    // -------------------------------------------------------------------------------------- //
+    // References:
+    // In above example, in order to use the variable s8 after calling calculate_length function we
+    // had to return the s8 from the function back. This is very tedious/verbose if we do for all
+    // functions and also think of functions with multiple parameters.
+    //
+    // In above case we were transfering the ownership of the variable. What if we just pass on the
+    // reference of the value to the function. Reference is like a pointer it points to the pointer
+    // of the variable. (Example: if `width` is a string we know it has three parts Pointer to heap
+    // memory, length and capacity, then if we create reference using &width then &width has pointer
+    // that points to the width. And when we access the &width we access width first and then using
+    // the pointer in width we access memory in heap)
+    //
+    // So the function can use the value without taking ownership of it. This is called
+    // Borrowing in Rust. To borrow a value we use & before a variable name. This is called
+    // Reference.
+    //
+    // Pointers can sometimes point to invalid memory locations, which can lead to undefined
+    // behaviour. But in Rust, references are guaranteed to always point to valid memory location.
+    // Since it will not allow memory cleanup of the value until all references to it are out of
+    // scope.
+    //
+    
+    {
+        let s9 = String::from("hello");             // s9 comes into scope
+        let length = calculate_length_ref(&s9);     // Reference of s9 given to function, and not ownership
+        println!("reference length: {length}");
+    } // scope of s9 and length finishes here
+    
+    // Now since &s9 is just a Reference and not Owner when the calculate_length_ref(&s9)
+    // function is completed the value of s9 will not be dropped.
+    // REPEAT: This using of reference instead of real variable is called Borrowing.
+    
+    // References are shown by &var_name and are immutable by default. To make them mutable we do
+    // `&mut var_name`.
+    
+    {
+        let mut s10 = String::from("Hello");    // s10 comes into scope
+        change(&mut s10);   // mutable reference of s10 passed to change function.
+        println!("value of s10 after change(&mut s10) is: {s10}");  //Value of s10 after change
+        //method changes its value
+    }   // scope of s10 ends here and memory is released
+    
+    // there is RESTRICTION when using mutable reference. You cannot have any other mutable reference
+    // of same variable until the mutable reference is in scope (Scope of references ends on their
+    // last usage and not compulsorily when the {} brackets end like normal variables)
+    //
+    // So, we can:
+    //      - have multiple immutable references simultaneously
+    //      - not have immutable references and mutable references simultaneously. (Since immutable ref
+    //      dont want the value to be changed)
+    //      - not have multiple mutable references simultaneously (since both ref can change value
+    //      and lead to data corruption)
+    //      - have multiple immutable references and only AFTER their last usage we can have a
+    //      mutable references.
+    
+    {
+        let mut s = String::from("hello");
+
+        let r1 = &s; // no problem // scope of r1 begins
+        let r2 = &s; // no problem // scope of r2 begins
+        // let r3 = &mut s; // BIG Problem error[E0502]: cannot borrow `s` as mutable because it is also borrowed as immutable
+        println!("{r1} and {r2}");
+        // Variables r1 and r2 will not be used after this point and so Rust removes them from
+        // scope
+
+        let r3 = &mut s; // no problem
+        println!("{r3}");
+    }
+
+    // DANGLING References
+    // Dangling references are the pointers which are pointing to memory that has been given to
+    // someone else. Or the pointer that is preserved after freeing the memory location.
+    // Rust prevents dangling references by ensuring that data will not go out of scope until it 
+    // has a reference and that reference is in scope.
+    
+    /*
+    {
+        let a = dangle();
+    }
+    */
 }
 
 fn takes_ownership(some_string: String) { // some_string comes into scope here
@@ -141,5 +241,36 @@ fn makes_copy(some_int: i32) {
 }
 
 fn gives_ownership() -> String {
-    String::from("hello")
+    String::from("hello") // string comes into scope, and value is moved into the s6 variable in
+    // caller place
 }
+
+fn take_and_give_ownership(some_string: String) -> String {
+    // some_string comes into scope
+    some_string // value is moved to calling function.
+}
+
+fn calculate_length(some_string: String) -> (String, usize) {
+    let length = some_string.len();
+    (some_string, length)
+}
+
+fn calculate_length_ref(some_string: &String) -> usize { //some_string is reference to a String
+    some_string.len()
+}   // some_string goes out of context, but since some_string is not owner of the value, value of
+    // string is not dropped
+
+fn change(s: &mut String) { // s comes into scope
+    s.push_str(" world!");  // update the string s that it borrowed
+}   // scope of s ends, since the value was borrowed so Update value in memory is not cleared.
+
+/*
+fn dangle() -> &String {
+    let s = String::from("hello"); // s comes into scope
+    &s // return reference of s
+}  // s goes out of scope and memory is released, so the reference returned is dangling and invalid.
+   // DANGE!!!
+   // But Rust compiler does not allow this and it throws error: `returns a reference to data owned
+   // by the current function this function's return type contains a borrowed value, but there is 
+   // no value for it to be borrowed from'
+*/
