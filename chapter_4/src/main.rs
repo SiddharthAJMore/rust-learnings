@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 fn main() {
     // Stack and Heap memory allocation in Rust
     // Stack memory is used for storing values with a known size at compile time, such as primitive
@@ -230,6 +232,71 @@ fn main() {
         let a = dangle();
     }
     */
+
+    // -------------------------------------------------------------------------------------- //
+    // Slices
+    {
+        let mut s = String::from("Siddharth More");
+        let first = first_word(&s);
+        println!("{first}");
+        s.clear();  // modify or truncate
+        // s is empty and the first=9. using first in s will result in error.
+        s.chars().nth(first); // Code compiles even though the s is empty. This is bug at runtime
+    }
+
+    // In above code you see that we pass the immutable reference of the string to the function
+    // (since we need to ge first word and not want to update the string so immutable) the method
+    // then checks the string and return the index of last char of the first word.
+    // Problem with this approach is, once i get the index of last char of first word back it is
+    // strored in variable first. Now if i empty the string using s.clear() [or modify the string],
+    // the index in first variable is still there but it is not valid in respective to the string in `s`.
+    // So after some logic somebody tries to use the `first` variable to get word frmo `s` it will
+    // fail since s has changed.
+    // Basically, the `first` variable is not in sync with the string.
+    
+    // This problem is solved using slices. Slice is reference to a contiguous sequence.
+    // We create slices using a range within square brackets by specifying [starting_index..ending_index]
+
+    {
+        let mut some = String::from("Rust is best!");
+        let word = first_word_fixed(&some); //immutable ref given to func. Immutable ref of first
+        //word string returned back and word stores that immutable ref.
+        println!("{word}"); // you try to print the string ! works fine !
+        // some.clear(); // compile time error, since immutable ref of some is used after this line.
+        println!("{word}"); // you add this print here and your compilation starts failing!!!!
+        // Why?
+        // lets see step by step:
+        //  1. you pass the immutable reference to first_word_fixed(...) function.
+        //  2. it returns a immutable reference of a first word in the string ref.
+        //  3. that immutable ref is stored in variable `word`
+        //  4. you added first print line its prints first variable.
+        //  5. you try to clear the some. COMPILATION Fails.
+        //      You will gett error at some.clear() that sounds like `Cannot
+        //      borrow `some` as mutable because it is also borrowed as immutable`.
+        //      This error occurs because of the last print statement, becuase the word is immutable
+        //      reference to some, and when we try to call clear() on `some` it tries to get the mutable
+        //      ref of some and since the immutable ref word is used after the clear line, both
+        //      mutable (clear) and immutable (word) ref cannot be present simultaneously,
+        //      compilation fails.
+        //      
+    }
+
+    {
+        let y = String::from("Rustacean"); // y is of type String
+        let _x = "string literal";   // x is of type &str
+        let _z = &y[..]; // z is of type &str
+
+        // fn first_word_fixed(s: &String) -> &str 
+        //
+        // To be able to use this method for the string and string literal both we can modify the
+        // signature to:
+        //      fn first_word_fixed(s: &str) -> &str 
+        //
+        //  And call it using:
+        //      first_word_fixed(&y[..]); // String type passed as str
+        //      first_word_fixed(x);
+        //
+    }
 }
 
 fn takes_ownership(some_string: String) { // some_string comes into scope here
@@ -269,8 +336,31 @@ fn dangle() -> &String {
     let s = String::from("hello"); // s comes into scope
     &s // return reference of s
 }  // s goes out of scope and memory is released, so the reference returned is dangling and invalid.
-   // DANGE!!!
+   // DANGER!!!
    // But Rust compiler does not allow this and it throws error: `returns a reference to data owned
    // by the current function this function's return type contains a borrowed value, but there is 
    // no value for it to be borrowed from'
 */
+
+fn first_word(s: &String) -> usize {
+    let bytes = s.as_bytes();
+    
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return i;
+        }
+    }
+
+    s.len()
+}
+
+fn first_word_fixed(s: &String) -> &str {
+    let bytes = s.as_bytes();
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[..i]; // returns immutable reference to the part of string from index 0 to i
+        }
+    }
+    &s[..] // returns immutable reference to the whole string
+}
