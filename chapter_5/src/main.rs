@@ -45,6 +45,79 @@ fn main() {
         //      so their values would be copied into _user3.active and _user3.sign_in_count and their
         //      ownership remains with user1
     }
+   
+   //-------- Tuple Struct Syntax
+   {
+        struct Color(i32, i32, i32);
+
+        let black = Color(0, 0, 0);
+        println!("red: {}, green: {}, blue: {}", black.0, black.1, black.2);
+   }
+
+   //-------- Printing the DTOs or objects using debug trait
+   {
+        #[derive(Debug)]
+        struct Rectangle {
+            width: u32,
+            heigth: u32
+        }
+
+        let rect1 = Rectangle{
+            width: 12,
+            heigth: 30
+        };
+        println!("rectangle1 = {rect1:?}"); // rectangle1 = Rectangle { width: 12, heigth: 30 }
+   }
+
+   //-------- Methods and functions
+   {
+        #[derive(Debug)]
+        struct User {
+            email: String,
+            name: String
+        }
+
+        impl User {
+            fn get_user_name(&self) -> String {
+                self.name.clone()
+            }
+
+            fn get_email(&self) -> String {
+                self.email.clone()
+            }
+        }
+
+        let user1 = User {
+            email: String::from("siddharth.aj.more@gmail.com"),
+            name: String::from("siddharth")
+        };
+
+        println!("the username is: {}",user1.get_user_name());
+        println!("the email is: {}",user1.get_email());
+
+   //------- Associated functions
+   // All methods in the impl block are associated functions. Apart from those, we can also have the
+   // functions without the &self parameter, such functions are used when we dont want the instance
+   // of the type to work with and we used it when we did String::from.
+
+        impl User { // by the way we can have multiple impl block for same struct
+            fn from(other: &User) -> User {
+                User {
+                    email: other.email.clone(),
+                    name: other.name.clone()
+                }
+            }
+        }
+
+        let user2 = User {
+            email: String::from("ashishjha@gmail.com"),
+            name: String::from("Ashish Jha")
+        };
+
+        let user3 = User::from(&user2);
+
+        println!("user3 using associate function: {user3:?}");
+   }
 }
 
 fn build_user(name: String, email: String) -> User {
